@@ -1,7 +1,24 @@
-/__pycache__
+# pycharm
+.idea
+.project
+.pydevproject
+*.mo
 
-/venv
+
+# python
+**/*.pyc
+__pycache__/
+*.py[cod]
+
+# Django stuff:
+*.log
+logs
+
+# media and static
 /uploads
 /static
+/SYMLINK
+celerybeat.pid
 
-.env
+# Environments
+venv/
