@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import validate_integer
 
 
 class AppUser(models.Model):
@@ -10,6 +11,14 @@ class AppUser(models.Model):
         db_table = 'app_user'
         verbose_name = 'app user'
         verbose_name_plural = 'app users'
+
+    def clean(self):
+        validate_integer(self.phone_number)
+        super().clean()
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
 
 
 class LoginRequest(models.Model):
