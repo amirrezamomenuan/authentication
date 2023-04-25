@@ -62,11 +62,19 @@ class LoginRequest(models.Model):
             raise ValidationError('already sent a verification code')
 
     @staticmethod
+    def __check_phone_number_length(phone_number: str):
+        if len(phone_number) < 8:
+            raise ValidationError('phone number too short')
+        elif len(phone_number) > 16:
+            raise ValidationError('phone number too long')
+
+    @staticmethod
     def __generate_verification_code():
         return ''.join(random.choices(string.digits, k=settings.VERIFICATION_CODE_LENGTH))
 
     def clean(self):
         validate_integer(self.phone_number)
+        self.__check_phone_number_length(self.phone_number)
         self.__check_request_limits(self.phone_number)
 
         super().clean()
