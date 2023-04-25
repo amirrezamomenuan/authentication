@@ -5,6 +5,9 @@ from decouple import config, Csv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
+JWT_AUTHENTICATION_KEY = config('JWT_AUTHENTICATION_KEY')
+ACCESS_TOKEN_EXPIRATION_TIME = config('ACCESS_TOKEN_EXPIRATION_TIME', cast=int)
+REFRESH_TOKEN_EXPIRATION_TIME = config('REFRESH_TOKEN_EXPIRATION_TIME', cast=int)
 
 DEBUG = config('DEBUG', cast=bool, default=False)
 

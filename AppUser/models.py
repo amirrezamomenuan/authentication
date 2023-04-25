@@ -50,7 +50,8 @@ class LoginRequest(models.Model):
     def __check_request_limits(cls, phone_number: str):
         last_login_requests = list(
             cls.objects.filter(
-                phone_number=phone_number
+                phone_number=phone_number,
+                request_date=timezone.now().date()
             )
         )
         if not last_login_requests:
@@ -79,3 +80,15 @@ class LoginRequest(models.Model):
         self.full_clean()
 
         super().save(*args, **kwargs)
+
+    @classmethod
+    def validate_verification_code(
+            cls,
+            phone_number: str,
+            verification_code: str
+    ) -> bool:
+        return cls.objects.filter(
+            phone_number=phone_number,
+            verification_code=verification_code,
+            expire_time__gte = timezone.now()
+        ).exists()
