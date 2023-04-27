@@ -1,10 +1,13 @@
+from types import SimpleNamespace
 from unittest import mock
 
 import pytest
 from django.urls import reverse
 from rest_framework import status
-
 from django.db import models
+
+from AppUser.models import LoginRequest, AppUser
+from AppUser.authentication import JWTTokenGenerator
 
 
 pytestmark = pytest.mark.django_db
@@ -41,3 +44,70 @@ class TestLoginViewStep1:
             send_verification_sms_mock.assert_called_once()
         else:
             send_verification_sms_mock.assert_not_called()
+
+
+class TestLoginViewStep2:
+    def test_without_giving_required_data_should_fail(self, client):
+        url = reverse('login_step_2_view')
+        response = client.post(url)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        'verification_data', [
+            {'phone_number': '09123456789'},
+            {'verification_code': '45189'},
+            {}
+        ]
+    )
+    @mock.patch.object(LoginRequest, 'validate_verification_code')
+    def test_with_giving_incomplete_data_should_fail(
+            self,
+            login_request_mock,
+            verification_data,
+            client
+    ):
+        url = reverse('login_step_2_view')
+        response = client.post(url, verification_data)
+
+        login_request_mock.assert_not_called()
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+    @mock.patch.object(LoginRequest, 'validate_verification_code', return_value=True)
+    @mock.patch.object(AppUser.objects, 'update_or_create')
+    @mock.patch.object(JWTTokenGenerator, 'generate_token_pair')
+    def test_with_giving_valid_phone_number_and_verification_code_should_pass(
+            self,
+            token_generator_mock,
+            app_user_mock,
+            validation_mock,
+            client
+    ):
+        url = reverse('login_step_2_view')
+        data = {
+            'phone_number': '09123456789',
+            'verification_code': '45189'
+        }
+
+        user = SimpleNamespace(id=123)
+        app_user_mock.return_value = (user, True)
+        token_generator_mock.return_value = {"refresh_token": '1dfslk1r', "access_token": '541fcv2'}
+
+        response = client.post(url, data)
+        assert response.status_code == status.HTTP_200_OK
+        app_user_mock.assert_called_once()
+        token_generator_mock.assert_called_once()
+
+    @mock.patch.object(LoginRequest, 'validate_verification_code', return_value=False)
+    def test_with_giving_invalid_phone_number_and_verification_code_should_fail(
+            self,
+            validation_mock,
+            client,
+    ):
+        url = reverse('login_step_2_view')
+        data = {
+            'phone_number': '09123456789',
+            'verification_code': '45189'
+        }
+        response = client.post(url, data)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST

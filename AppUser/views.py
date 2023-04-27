@@ -39,9 +39,9 @@ class LoginView(ViewSet):
 
     def login_step_2(self, request):
         try:
-            phone_number = str(request.data.get('phone_number'))
-            verification_code = str(request.data.get('verification_code'))
-        except (TypeError, ValueError):
+            phone_number = str(request.data['phone_number'])
+            verification_code = str(request.data['verification_code'])
+        except KeyError:
             return Response(
                 data={'message': 'invalid data'},
                 status=status.HTTP_400_BAD_REQUEST
