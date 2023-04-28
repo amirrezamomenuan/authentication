@@ -38,15 +38,18 @@ class JWTTokenGenerator:
         """
         payload = dict()
 
-        decoded_data = jwt.decode(
-            refresh_token,
-            settings.JWT_AUTHENTICATION_KEY,
-            ['HS256']
-        )
-        payload['uid'] = decoded_data.get('user_id')
-        payload['exp'] = timezone.now() + timezone.timedelta(seconds=settings.ACCESS_TOKEN_EXPIRATION_TIME)
+        try:
+            decoded_data = jwt.decode(
+                refresh_token,
+                settings.JWT_AUTHENTICATION_KEY,
+                ['HS256']
+            )
+            payload['uid'] = decoded_data.get('user_id')
+            payload['exp'] = timezone.now() + timezone.timedelta(seconds=settings.ACCESS_TOKEN_EXPIRATION_TIME)
+        except:
+            return False, None
 
-        return cls.__generate_token(payload=payload)
+        return True, cls.__generate_token(payload=payload)
 
     @classmethod
     def generate_token_pair(cls, user_id: int) -> dict:

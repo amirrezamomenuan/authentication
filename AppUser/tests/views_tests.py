@@ -7,7 +7,7 @@ from rest_framework import status
 from django.db import models
 
 from AppUser.models import LoginRequest, AppUser
-from AppUser.authentication import JWTTokenGenerator
+from AppUser.token_generator import JWTTokenGenerator
 
 
 pytestmark = pytest.mark.django_db
@@ -47,11 +47,6 @@ class TestLoginViewStep1:
 
 
 class TestLoginViewStep2:
-    def test_without_giving_required_data_should_fail(self, client):
-        url = reverse('login_step_2_view')
-        response = client.post(url)
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-
     @pytest.mark.parametrize(
         'verification_data', [
             {'phone_number': '09123456789'},
@@ -111,3 +106,24 @@ class TestLoginViewStep2:
         }
         response = client.post(url, data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+class TestGetAccessTokenView:
+    def test_getting_access_token_without_providing_refresh_token(self, client):
+        url = reverse('access_token_view')
+        response = client.post(url)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_getting_access_token_with_valid_refresh_token(self, client):
+        with mock.patch('AppUser.views.JWTTokenGenerator.generate_access_token') as tg:
+            tg.return_value = (True, 'access.token.string12345')
+            url = reverse('access_token_view')
+            response = client.post(url, {"refresh_token": 'valid_refresh_token'})
+            assert response.status_code == status.HTTP_200_OK
+
+    def test_getting_access_token_with_invalid_refresh_token(self, client):
+        with mock.patch('AppUser.views.JWTTokenGenerator.generate_access_token') as tg:
+            tg.return_value = (False, None)
+            url = reverse('access_token_view')
+            response = client.post(url, {"refresh_token": 'invalid_refresh_token'})
+            assert response.status_code == status.HTTP_400_BAD_REQUEST

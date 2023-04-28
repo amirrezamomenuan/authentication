@@ -6,7 +6,7 @@ from rest_framework import status
 
 from .models import LoginRequest, AppUser
 from .utils import send_verification_sms
-from .authentication import JWTTokenGenerator
+from .token_generator import JWTTokenGenerator
 
 class LoginView(ViewSet):
     def login_step_1(self, request):
@@ -56,7 +56,7 @@ class LoginView(ViewSet):
                 phone_number=phone_number,
                 defaults={}
             )
-            
+
             token_pair = JWTTokenGenerator.generate_token_pair(
                 user_id=app_user.id
             )
@@ -73,15 +73,23 @@ class LoginView(ViewSet):
 class GetAccessTokenView(APIView):
     def post(self, request):
         try:
-            refresh_token = str(request.data.get('refresh_token'))
-        except (TypeError, ValueError):
+            refresh_token = str(request.data['refresh_token'])
+        except KeyError:
             return Response(
-                data={'message': 'invalid credentials'},
+                data={'message': 'invalid data'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        access_token = JWTTokenGenerator.generate_access_token(refresh_token)
+        is_valid, access_token = JWTTokenGenerator.generate_access_token(refresh_token)
+
+        print(is_valid, access_token)
+
+        if is_valid:
+            return Response(
+                data={"access_token": access_token},
+            )
 
         return Response(
-            data={"access_token": access_token},
+            data={"message": 'invalid refresh token'},
+            status=status.HTTP_400_BAD_REQUEST
         )
