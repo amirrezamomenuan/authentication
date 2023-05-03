@@ -80,11 +80,9 @@ class GetAccessTokenView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        is_valid, access_token = JWTTokenGenerator.generate_access_token(refresh_token)
+        access_token = JWTTokenGenerator.generate_access_token(refresh_token)
 
-        print(is_valid, access_token)
-
-        if is_valid:
+        if access_token:
             return Response(
                 data={"access_token": access_token},
             )

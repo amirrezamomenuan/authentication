@@ -114,16 +114,21 @@ class TestGetAccessTokenView:
         response = client.post(url)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_getting_access_token_with_valid_refresh_token(self, client):
+    @pytest.mark.parametrize(
+        'access_token, is_valid, expected_status_code', [
+            ('valid.access.token1234', True, status.HTTP_200_OK),
+            (None, False, status.HTTP_400_BAD_REQUEST)
+        ]
+    )
+    def test_getting_access_token_with_different_refresh_tokens(
+            self,
+            access_token,
+            is_valid,
+            expected_status_code,
+            client
+    ):
         with mock.patch('AppUser.views.JWTTokenGenerator.generate_access_token') as tg:
-            tg.return_value = (True, 'access.token.string12345')
+            tg.return_value = access_token
             url = reverse('access_token_view')
-            response = client.post(url, {"refresh_token": 'valid_refresh_token'})
-            assert response.status_code == status.HTTP_200_OK
-
-    def test_getting_access_token_with_invalid_refresh_token(self, client):
-        with mock.patch('AppUser.views.JWTTokenGenerator.generate_access_token') as tg:
-            tg.return_value = (False, None)
-            url = reverse('access_token_view')
-            response = client.post(url, {"refresh_token": 'invalid_refresh_token'})
-            assert response.status_code == status.HTTP_400_BAD_REQUEST
+            response = client.post(url, {"refresh_token": 'some_valid_refresh_token'})
+            assert response.status_code == expected_status_code

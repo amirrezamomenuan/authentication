@@ -1,4 +1,5 @@
 import jwt
+from jwt import ExpiredSignatureError, DecodeError, InvalidSignatureError
 
 from django.conf import settings
 from django.utils import timezone
@@ -46,10 +47,10 @@ class JWTTokenGenerator:
             )
             payload['uid'] = decoded_data.get('user_id')
             payload['exp'] = timezone.now() + timezone.timedelta(seconds=settings.ACCESS_TOKEN_EXPIRATION_TIME)
-        except:
-            return False, None
+        except (ExpiredSignatureError, DecodeError, InvalidSignatureError):
+            return None
 
-        return True, cls.__generate_token(payload=payload)
+        return cls.__generate_token(payload=payload)
 
     @classmethod
     def generate_token_pair(cls, user_id: int) -> dict:
