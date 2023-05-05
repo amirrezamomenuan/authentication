@@ -27,7 +27,7 @@ class TestLoginViewStep1:
     @mock.patch('AppUser.views.send_verification_sms')
     def test_with_providing_different_phone_numbers(
             self,
-            send_verification_sms_mock,
+            send_verification_sms_task_mock,
             phone_number,
             expected_status_code,
             send_sms,
@@ -41,9 +41,9 @@ class TestLoginViewStep1:
             assert response.status_code == expected_status_code
 
         if send_sms:
-            send_verification_sms_mock.assert_called_once()
+            send_verification_sms_task_mock.delay.assert_called_once()
         else:
-            send_verification_sms_mock.assert_not_called()
+            send_verification_sms_task_mock.delay.assert_not_called()
 
 
 class TestLoginViewStep2:
