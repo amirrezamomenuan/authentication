@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.core.exceptions import ValidationError
 from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSet
@@ -47,15 +48,17 @@ class LoginView(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        code_verified = LoginRequest.validate_verification_code(
+        latest_login_request = LoginRequest.get_last_valid_request(
             phone_number=phone_number,
             verification_code=verification_code
         )
-        if code_verified:
-            app_user, _ = AppUser.objects.update_or_create(
-                phone_number=phone_number,
-                defaults={}
-            )
+        if latest_login_request:
+            with transaction.atomic():
+                app_user, _ = AppUser.objects.update_or_create(
+                    phone_number=phone_number,
+                    defaults={}
+                )
+                latest_login_request.consume()
 
             token_pair = JWTTokenGenerator.generate_token_pair(
                 user_id=app_user.id

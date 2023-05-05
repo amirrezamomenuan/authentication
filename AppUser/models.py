@@ -39,6 +39,7 @@ class LoginRequest(models.Model):
     expire_time = models.DateTimeField()
     verification_code = models.CharField(max_length=8)
     request_date = models.DateField(auto_now_add=True, db_index=True)
+    is_consumed = models.BooleanField(default=False, db_index=True)
     objects = LoginRequestManager()
 
     class Meta:
@@ -80,23 +81,28 @@ class LoginRequest(models.Model):
         super().clean()
 
     def save(self, *args, **kwargs):
-        self.verification_code = self.__generate_verification_code()
-        self.expire_time = timezone.now() + timezone.timedelta(
-            seconds=settings.VERIFICATION_CODE_EXPIRE_TIME_SECONDS
-        )
-
-        self.full_clean()
+        if not self.is_consumed:
+            self.verification_code = self.__generate_verification_code()
+            self.expire_time = timezone.now() + timezone.timedelta(
+                seconds=settings.VERIFICATION_CODE_EXPIRE_TIME_SECONDS
+            )
+            self.full_clean()
 
         super().save(*args, **kwargs)
 
+    def consume(self):
+        self.is_consumed = True
+        self.save()
+
     @classmethod
-    def validate_verification_code(
+    def get_last_valid_request(
             cls,
             phone_number: str,
             verification_code: str
-    ) -> bool:
+    ):
         return cls.objects.filter(
             phone_number=phone_number,
             verification_code=verification_code,
-            expire_time__gte = timezone.now()
-        ).exists()
+            expire_time__gte=timezone.now(),
+            is_consumed=False
+        ).last()
