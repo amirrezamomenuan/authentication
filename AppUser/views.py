@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from .models import LoginRequest, AppUser
-from .utils import send_verification_sms
+from .tasks import send_verification_sms
 from .token_generator import JWTTokenGenerator
 
 class LoginView(ViewSet):
@@ -28,7 +28,7 @@ class LoginView(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        send_verification_sms(
+        send_verification_sms.delay(
             phone_number=phone_number,
             verification_code=login_request.verification_code
         )
