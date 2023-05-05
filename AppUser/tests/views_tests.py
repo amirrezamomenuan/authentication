@@ -54,7 +54,7 @@ class TestLoginViewStep2:
             {}
         ]
     )
-    @mock.patch.object(LoginRequest, 'validate_verification_code')
+    @mock.patch.object(LoginRequest, 'get_last_valid_request')
     def test_with_giving_incomplete_data_should_fail(
             self,
             login_request_mock,
@@ -68,7 +68,7 @@ class TestLoginViewStep2:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
-    @mock.patch.object(LoginRequest, 'validate_verification_code', return_value=True)
+    @mock.patch.object(LoginRequest, 'get_last_valid_request')
     @mock.patch.object(AppUser.objects, 'update_or_create')
     @mock.patch.object(JWTTokenGenerator, 'generate_token_pair')
     def test_with_giving_valid_phone_number_and_verification_code_should_pass(
@@ -76,7 +76,8 @@ class TestLoginViewStep2:
             token_generator_mock,
             app_user_mock,
             validation_mock,
-            client
+            client,
+            login_request
     ):
         url = reverse('login_step_2_view')
         data = {
@@ -87,16 +88,17 @@ class TestLoginViewStep2:
         user = SimpleNamespace(id=123)
         app_user_mock.return_value = (user, True)
         token_generator_mock.return_value = {"refresh_token": '1dfslk1r', "access_token": '541fcv2'}
+        validation_mock.return_value = login_request
 
         response = client.post(url, data)
         assert response.status_code == status.HTTP_200_OK
         app_user_mock.assert_called_once()
         token_generator_mock.assert_called_once()
 
-    @mock.patch.object(LoginRequest, 'validate_verification_code', return_value=False)
+    @mock.patch.object(LoginRequest, 'get_last_valid_request', return_value=None)
     def test_with_giving_invalid_phone_number_and_verification_code_should_fail(
             self,
-            validation_mock,
+            get_last_valid_request_mock,
             client,
     ):
         url = reverse('login_step_2_view')
