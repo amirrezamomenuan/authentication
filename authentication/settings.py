@@ -1,6 +1,8 @@
 from pathlib import Path
 from decouple import config, Csv
 
+from .logging import LOGGING
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -12,6 +14,9 @@ REFRESH_TOKEN_EXPIRATION_TIME = config('REFRESH_TOKEN_EXPIRATION_TIME', cast=int
 DEBUG = config('DEBUG', cast=bool, default=False)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
+
+OTP_SECRET_TOKEN = config('OTP_SECRET_TOKEN')
+OTP_VERIFICATION_SMS_URL = config('OTP_VERIFICATION_SMS_URL')
 
 
 INSTALLED_APPS = [
