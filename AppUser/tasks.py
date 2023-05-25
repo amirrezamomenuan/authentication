@@ -32,7 +32,7 @@ def send_verification_sms(phone_number: str, verification_code: str):
         response.raise_for_status()
     except Exception as e:
         logger.error(
-            '[sending sms failed]-[phone_number: {}]-[error: {}]-[response: {}]'.format(
+            '[sending sms failed]-[phone_number: {}]-[error: {}]'.format(
                 phone_number,
                 e,
             )
