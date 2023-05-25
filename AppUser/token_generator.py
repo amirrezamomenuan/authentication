@@ -45,7 +45,7 @@ class JWTTokenGenerator:
                 settings.JWT_AUTHENTICATION_KEY,
                 ['HS256']
             )
-            payload['uid'] = decoded_data.get('user_id')
+            payload['uid'] = decoded_data['uid']
             payload['exp'] = timezone.now() + timezone.timedelta(seconds=settings.ACCESS_TOKEN_EXPIRATION_TIME)
         except (ExpiredSignatureError, DecodeError, InvalidSignatureError):
             return None
