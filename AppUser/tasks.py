@@ -35,7 +35,6 @@ def send_verification_sms(phone_number: str, verification_code: str):
             '[sending sms failed]-[phone_number: {}]-[error: {}]-[response: {}]'.format(
                 phone_number,
                 e,
-                response.text
             )
         )
 
